@@ -56,18 +56,39 @@ const connectionString = "mongodb://localhost:27017";
 
 
 		// agregation with map-reduce
-		const cursor = await collection.mapReduce(
-			function () {emit(this.cust_id, this.amount);},
-			function (key, values) {return Array.sum(values);},
-			{
-				query: {status: 'A'},
-				out: 'order_totals'
-			}
-				)
+		// const cursor = await collection.mapReduce(
+		// 	function () {emit(this.cust_id, this.amount);},
+		// 	function (key, values) {return Array.sum(values);},
+		// 	{
+		// 		query: {status: 'A'},
+		// 		out: 'order_totals'
+		// 	}
+		// 		)
 
-		const result = await cursor.toArray();
-		console.log('cursor',result)
-
+		const result = await collection.aggregate([
+			{$match: {'age': {'$gte': 15}}},
+			{$project: {name: true, '_id': true}},
+			{$group: {'_id': '$name', users: {$sum: 1}}},
+			// [{"_id":"John","users":10},{"_id":"yura","users":5},{"_id":"yulia","users":5},{"_id":"tyueusl","users":5}]
+			{$sort: {'moreNames': 1}}
+			// [{"_id":"John","users":10},{"_id":"yulia","users":5},{"_id":"tyueusl","users":5},{"_id":"yura","users":5}]
+		]).toArray();
+		console.log('result', JSON.stringify(result));
+console.log('---------------------------')
+		// const result1 = await collection.aggregate([
+		// 	{
+		// 		$project: {'_id': 0}
+		// 	},
+		// 	{$addFields: {totalLanguages: {$size:'$languages'}}}
+		// ]).toArray();
+		// console.log('result1',JSON.stringify(result1))
+	const result2 = await collection.aggregate([
+			{$match: {'age': {'$gte': 15}}},
+			{$project: {name: true, 'age': true}},
+			{$group: {'_id': '$name', 'countMounts': {$sum: {$multiply:['$age',12]}}}}
+	]).toArray();
+		// result2 [{"_id":"John","countMounts":5940},{"_id":"yulia","countMounts":1500},{"_id":"tyueusl","countMounts":1320},{"_id":"yura","countMounts":1980}]
+		console.log('result2', JSON.stringify(result2))
 		// cursor.forEach(doc => {
 		// 	console.log('doc', doc.age)
 		// });
